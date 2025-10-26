@@ -27,6 +27,34 @@ def add_task():
     conn.close()
     return jsonify({'message': 'Task added!'}), 201
 
+@app.route('/tasks/<int:task_id>', methods=['PUT'])
+def update_task(task_id):
+    """Update an existing task by ID"""
+    data = request.get_json()
+    
+    # Validate request data
+    if not data or 'task' not in data:
+        return jsonify({'error': 'Task field is required'}), 400
+    
+    task = data.get('task', '').strip()
+    if not task:
+        return jsonify({'error': 'Task text is required'}), 400
+    
+    conn = get_db()
+    
+    # Check if task exists
+    existing_task = conn.execute('SELECT * FROM tasks WHERE id = ?', (task_id,)).fetchone()
+    if not existing_task:
+        conn.close()
+        return jsonify({'error': 'Task not found'}), 404
+    
+    # Update the task
+    conn.execute('UPDATE tasks SET task = ? WHERE id = ?', (task, task_id))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'message': 'Task updated!'}), 200
+
 if __name__ == '__main__':
     # Initialize DB
     conn = get_db()
