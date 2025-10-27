@@ -20,3 +20,24 @@ simple-fullstack-app/
 ├── .gitignore # Ignore venv, node_modules, etc.
 └── README.md
 ```
+
+---
+
+## 🧰 Getting Started
+
+### 1️⃣ Clone the repository
+```bash
+git clone https://github.com/<your-username>/simple-fullstack-app.git
+cd simple-fullstack-app
+
+cd backend
+python3 -m venv venv
+source venv/bin/activate   # (Mac/Linux)
+# or
+venv\Scripts\activate      # (Windows)
+pip install -r requirements.txt
+python app.py
+
+cd frontend
+npm install
+npm start
