@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getTasks, addTask, updateTask } from "./api";
+import { getTasks, addTask, updateTask, deleteTask } from "./api";
 
 function App() {
   const [tasks, setTasks] = useState([]);
@@ -42,6 +42,18 @@ function App() {
     }
   };
 
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to delete this task?")) {
+      try {
+        await deleteTask(id);
+        fetchTasks();
+      } catch (error) {
+        console.error("Error deleting task:", error);
+        alert("Failed to delete task. Please try again.");
+      }
+    }
+  };
+
   useEffect(() => {
     fetchTasks();
   }, []);
@@ -81,6 +93,12 @@ function App() {
                   style={{ marginLeft: "10px" }}
                 >
                   Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(t.id)}
+                  style={{ marginLeft: "5px" }}
+                >
+                  Delete
                 </button>
               </>
             )}

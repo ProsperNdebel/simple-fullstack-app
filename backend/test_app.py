@@ -11,28 +11,28 @@ def client():
     """Create a test client and test database"""
     # Use a test database
     app.config['TESTING'] = True
-    
+
     # Setup test database
     conn = sqlite3.connect('test_database.db')
     conn.execute('CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY, task TEXT)')
     conn.close()
-    
+
     # Override get_db to use test database
     original_get_db = app_module.get_db
-    
+
     def test_get_db():
         conn = sqlite3.connect('test_database.db')
         conn.row_factory = sqlite3.Row
         return conn
-    
+
     app_module.get_db = test_get_db
-    
+
     with app.test_client() as client:
         yield client
-    
+
     # Restore original get_db
     app_module.get_db = original_get_db
-    
+
     # Cleanup test database
     if os.path.exists('test_database.db'):
         os.remove('test_database.db')
@@ -59,7 +59,7 @@ def test_get_tasks(client):
 
 def test_add_task(client):
     """Test adding a new task"""
-    response = client.post('/tasks', 
+    response = client.post('/tasks',
                           data=json.dumps({'task': 'Test task'}),
                           content_type='application/json')
     assert response.status_code == 201
@@ -74,7 +74,7 @@ def test_update_task(client, sample_task):
                          content_type='application/json')
     assert response.status_code == 200
     assert response.json['message'] == 'Task updated!'
-    
+
     # Verify the task was actually updated
     conn = sqlite3.connect('test_database.db')
     conn.row_factory = sqlite3.Row
@@ -110,3 +110,74 @@ def test_update_task_missing_task_field(client, sample_task):
                          content_type='application/json')
     assert response.status_code == 400
     assert 'required' in response.json['error'].lower()
+
+
+def test_delete_task(client, sample_task):
+    """Test deleting an existing task"""
+    task_id = sample_task
+    response = client.delete(f'/tasks/{task_id}')
+    assert response.status_code == 200
+    assert response.json['message'] == 'Task deleted!'
+
+    # Verify the task was actually deleted
+    conn = sqlite3.connect('test_database.db')
+    conn.row_factory = sqlite3.Row
+    task = conn.execute('SELECT * FROM tasks WHERE id = ?', (task_id,)).fetchone()
+    conn.close()
+    assert task is None
+
+
+def test_delete_nonexistent_task(client):
+    """Test deleting a task that doesn't exist"""
+    response = client.delete('/tasks/999')
+    assert response.status_code == 404
+    assert 'not found' in response.json['error'].lower()
+
+
+def test_delete_task_with_invalid_id(client):
+    """Test deleting a task with invalid ID format"""
+    response = client.delete('/tasks/invalid')
+    assert response.status_code == 404  # Flask routing will return 404 for invalid int
+
+
+def test_delete_multiple_tasks(client):
+    """Test deleting multiple tasks sequentially"""
+    # Add multiple tasks
+    conn = sqlite3.connect('test_database.db')
+    cursor1 = conn.execute('INSERT INTO tasks (task) VALUES (?)', ('Task 1',))
+    task_id1 = cursor1.lastrowid
+    cursor2 = conn.execute('INSERT INTO tasks (task) VALUES (?)', ('Task 2',))
+    task_id2 = cursor2.lastrowid
+    conn.commit()
+    conn.close()
+
+    # Delete first task
+    response = client.delete(f'/tasks/{task_id1}')
+    assert response.status_code == 200
+
+    # Delete second task
+    response = client.delete(f'/tasks/{task_id2}')
+    assert response.status_code == 200
+
+    # Verify both tasks are deleted
+    conn = sqlite3.connect('test_database.db')
+    conn.row_factory = sqlite3.Row
+    task1 = conn.execute('SELECT * FROM tasks WHERE id = ?', (task_id1,)).fetchone()
+    task2 = conn.execute('SELECT * FROM tasks WHERE id = ?', (task_id2,)).fetchone()
+    conn.close()
+    assert task1 is None
+    assert task2 is None
+
+
+def test_delete_task_twice(client, sample_task):
+    """Test attempting to delete the same task twice"""
+    task_id = sample_task
+    
+    # First delete should succeed
+    response = client.delete(f'/tasks/{task_id}')
+    assert response.status_code == 200
+
+    # Second delete should fail with 404
+    response = client.delete(f'/tasks/{task_id}')
+    assert response.status_code == 404
+    assert 'not found' in response.json['error'].lower()
