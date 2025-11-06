@@ -1,56 +1,23 @@
 import React, { useEffect, useState } from "react";
 import { getTasks, addTask, updateTask, deleteTask } from "./api";
+import "./App.css";
 
 function App() {
   const [tasks, setTasks] = useState([]);
   const [newTask, setNewTask] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState("");
+  const [loading, setLoading] = useState(true);
 
   const fetchTasks = async () => {
-    const res = await getTasks();
-    setTasks(res.data);
-  };
-
-  const handleAdd = async () => {
-    if (!newTask.trim()) return;
-    await addTask(newTask);
-    setNewTask("");
-    fetchTasks();
-  };
-
-  const startEdit = (task) => {
-    setEditingId(task.id);
-    setEditText(task.task);
-  };
-
-  const cancelEdit = () => {
-    setEditingId(null);
-    setEditText("");
-  };
-
-  const handleUpdate = async (id) => {
-    if (!editText.trim()) return;
     try {
-      await updateTask(id, editText);
-      setEditingId(null);
-      setEditText("");
-      fetchTasks();
+      setLoading(true);
+      const res = await getTasks();
+      setTasks(res.data);
     } catch (error) {
-      console.error("Error updating task:", error);
-      alert("Failed to update task. Please try again.");
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this task?")) {
-      try {
-        await deleteTask(id);
-        fetchTasks();
-      } catch (error) {
-        console.error("Error deleting task:", error);
-        alert("Failed to delete task. Please try again.");
-      }
+      console.error("Error fetching tasks:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -58,53 +25,174 @@ function App() {
     fetchTasks();
   }, []);
 
-  return (
-    <div style={{ margin: "2rem" }}>
-      <h2>Simple Fullstack App</h2>
-      <input
-        type="text"
-        placeholder="Enter a task"
-        value={newTask}
-        onChange={(e) => setNewTask(e.target.value)}
-      />
-      <button onClick={handleAdd}>Add</button>
+  const handleAddTask = async () => {
+    if (newTask.trim()) {
+      try {
+        await addTask(newTask);
+        setNewTask("");
+        fetchTasks();
+      } catch (error) {
+        console.error("Error adding task:", error);
+      }
+    }
+  };
 
-      <ul>
-        {tasks.map((t) => (
-          <li key={t.id} style={{ marginBottom: "10px" }}>
-            {editingId === t.id ? (
-              <>
-                <input
-                  type="text"
-                  value={editText}
-                  onChange={(e) => setEditText(e.target.value)}
-                  style={{ marginRight: "5px" }}
-                />
-                <button onClick={() => handleUpdate(t.id)}>Save</button>
-                <button onClick={cancelEdit} style={{ marginLeft: "5px" }}>
-                  Cancel
-                </button>
-              </>
-            ) : (
-              <>
-                <span>{t.task}</span>
-                <button
-                  onClick={() => startEdit(t)}
-                  style={{ marginLeft: "10px" }}
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(t.id)}
-                  style={{ marginLeft: "5px" }}
-                >
-                  Delete
-                </button>
-              </>
-            )}
-          </li>
-        ))}
-      </ul>
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      handleAddTask();
+    }
+  };
+
+  const toggleTaskCompletion = async (task) => {
+    try {
+      await updateTask(task.id, !task.completed);
+      fetchTasks();
+    } catch (error) {
+      console.error("Error toggling task:", error);
+    }
+  };
+
+  const startEdit = (task) => {
+    setEditingId(task.id);
+    setEditText(task.task);
+  };
+
+  const handleSaveEdit = async (id) => {
+    if (editText.trim()) {
+      try {
+        await updateTask(id, editText);
+        setEditingId(null);
+        setEditText("");
+        fetchTasks();
+      } catch (error) {
+        console.error("Error updating task:", error);
+      }
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditText("");
+  };
+
+  const handleEditKeyPress = (e, id) => {
+    if (e.key === "Enter") {
+      handleSaveEdit(id);
+    } else if (e.key === "Escape") {
+      handleCancelEdit();
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await deleteTask(id);
+      fetchTasks();
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    }
+  };
+
+  const completedCount = tasks.filter((t) => t.completed).length;
+  const totalCount = tasks.length;
+
+  return (
+    <div className="app-container">
+      <h1 className="app-title">📝 Task Manager</h1>
+
+      <div className="add-task-form">
+        <input
+          type="text"
+          className="task-input"
+          placeholder="What needs to be done? ✨"
+          value={newTask}
+          onChange={(e) => setNewTask(e.target.value)}
+          onKeyPress={handleKeyPress}
+        />
+        <button className="btn btn-primary" onClick={handleAddTask}>
+          ➕ Add Task
+        </button>
+      </div>
+
+      <div className="tasks-header">
+        <span>Your Tasks</span>
+        {totalCount > 0 && (
+          <span className="task-count">
+            {completedCount}/{totalCount}
+          </span>
+        )}
+      </div>
+
+      {loading ? (
+        <div className="loading">Loading tasks... ⏳</div>
+      ) : tasks.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-state-icon">🎯</div>
+          <div className="empty-state-text">No tasks yet!</div>
+          <div className="empty-state-subtext">
+            Add your first task to get started
+          </div>
+        </div>
+      ) : (
+        <ul className="tasks-list">
+          {tasks.map((t) => (
+            <li key={t.id} className="task-item">
+              <input
+                type="checkbox"
+                className="task-checkbox"
+                checked={t.completed}
+                onChange={() => toggleTaskCompletion(t)}
+              />
+
+              {editingId === t.id ? (
+                <div className="task-content">
+                  <input
+                    type="text"
+                    className="task-edit-input"
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    onKeyDown={(e) => handleEditKeyPress(e, t.id)}
+                    autoFocus
+                  />
+                  <div className="task-actions">
+                    <button
+                      className="btn btn-success btn-small"
+                      onClick={() => handleSaveEdit(t.id)}
+                    >
+                      ✓ Save
+                    </button>
+                    <button
+                      className="btn btn-cancel btn-small"
+                      onClick={handleCancelEdit}
+                    >
+                      ✕ Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <span className={`task-text ${t.completed ? "completed" : ""}`}>
+                    {t.task}
+                  </span>
+                  <div className="task-actions">
+                    <button
+                      className="btn btn-secondary btn-small"
+                      onClick={() => startEdit(t)}
+                    >
+                      ✏️ Edit
+                    </button>
+                    <button
+                      className="btn btn-danger btn-small"
+                      onClick={() => handleDelete(t.id)}
+                    >
+                      🗑️ Delete
+                    </button>
+                  </div>
+                </>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
