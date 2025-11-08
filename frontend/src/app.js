@@ -222,13 +222,13 @@ function App() {
                       />
                     </div>
                     <span className={`task-text ${t.completed ? "completed" : ""}`}>
-                      {t.text}
+                      {t.task}
                     </span>
                   </div>
                   <div className="task-actions">
                     <button
                       className="btn btn-warning btn-small"
-                      onClick={() => handleEdit(t.id, t.text)}
+                      onClick={() => handleEdit(t.id, t.task)}
                     >
                       ✏️ Edit
                     </button>
