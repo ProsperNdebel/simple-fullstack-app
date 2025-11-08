@@ -72,7 +72,7 @@ function App() {
   const handleSaveEdit = async (id) => {
     if (!editText.trim()) return;
     try {
-      const res = await updateTask(id, { text: editText });
+      const res = await updateTask(id, editText);
       setTasks(tasks.map((t) => (t.id === id ? res.data : t)));
       setEditingId(null);
       setEditText("");
