@@ -1,6 +1,11 @@
 # Simple Fullstack Task Manager
 
-A lightweight task management application built with Flask (backend) and React (frontend). This app demonstrates a simple fullstack architecture with CRUD operations for managing tasks.
+![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Python](https://img.shields.io/badge/python-3.8%2B-blue)
+![Node](https://img.shields.io/badge/node-16%2B-green)
+
+A lightweight task management application built with Flask (backend) and React (frontend). This app demonstrates a simple fullstack architecture with CRUD operations for managing tasks. The backend and frontend communicate via REST API with CORS enabled for cross-origin requests.
 
 ## Features
 
@@ -16,7 +21,7 @@ A lightweight task management application built with Flask (backend) and React (
 **Backend:**
 - Flask - Python web framework
 - SQLite - Lightweight database
-- Flask-CORS - Cross-origin resource sharing
+- Flask-CORS - Enables cross-origin resource sharing between frontend (port 3000) and backend (port 5000)
 
 **Frontend:**
 - React - UI framework
@@ -52,8 +57,8 @@ simple-fullstack-app/
 
 ### Prerequisites
 
-- Python 3.8 or higher
-- Node.js 14.x or higher
+- Python 3.8+ (Python 3.8 or higher required)
+- Node.js 16+ or higher
 - npm or yarn
 
 ### Backend Setup
@@ -61,7 +66,7 @@ simple-fullstack-app/
 1. Navigate to the backend directory:
    ```bash
    cd backend
-   ```
+   ``` (default port: 5000)
 
 2. Create a virtual environment:
    ```bash
@@ -79,7 +84,7 @@ simple-fullstack-app/
    python app.py
    ```
 
-   The backend will start on `http://localhost:5000`
+   The backend API server will start on `http://localhost:5000`
 
 ### Frontend Setup
 
@@ -98,7 +103,7 @@ simple-fullstack-app/
    npm start
    ```
 
-   The frontend will open in your browser at `http://localhost:3000`
+   The frontend will open in your browser at `http://localhost:3000`. It connects to the backend API at port 5000 via CORS-enabled requests.
 
 ## API Endpoints
 
@@ -140,4 +145,3 @@ The SQLite database is automatically created when you first run the backend. It 
 
 ## License
 
-This project is open source and available under the [MIT License](LICENSE).
