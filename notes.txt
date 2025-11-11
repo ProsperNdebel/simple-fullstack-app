@@ -1,0 +1,11 @@
+Simple Fullstack App - Notes
+
+This file was created as part of ticket S1-7.
+
+Project Overview:
+- A fullstack application with frontend and backend components
+- Created to demonstrate basic development workflow
+- Includes pull request and version control practices
+
+Author: Alise
+Date: 2025-11-11
